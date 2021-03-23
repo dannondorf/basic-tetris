@@ -1,3 +1,9 @@
+//To Do:  
+// - add colors and styles to blocks
+// - fix collision issue that doesn't allow blocks to slide into open spaces underneath
+
+
+
 document.addEventListener('DOMContentLoaded', () => {
 
 //GAME-BOARD
