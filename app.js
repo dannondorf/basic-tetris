@@ -87,7 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
     ];
 
     const theBlocks = [lBlock, zBlock, tBlock, oBlock, iBlock];
-
+    const theColors = ['orange','red','purple','green','cyan'];
     let currentPosition = 6;
     let currentRotation = 0;
 
@@ -100,25 +100,25 @@ document.addEventListener('DOMContentLoaded', () => {
 //DRAW/ERASE FUNCTIONS
     function draw() {
         current.forEach(index => {
-            squares[currentPosition + index].classList.add('block');
+            squares[currentPosition + index].style.backgroundColor = theColors[randomBlock];
         })
     }
 
     function undraw() {
         current.forEach(index => {
-            squares[currentPosition + index].classList.remove('block');
+            squares[currentPosition + index].style.backgroundColor = '';
         })
     }
 
     function drawDisplay(){
         nextBlockArr[nextRandom].forEach(index => {
-            displaySquares[displayIndex + (index+displayWidth)].classList.add('block');
+            displaySquares[displayIndex + (index+displayWidth)].style.backgroundColor = theColors[nextRandom];
         })
     }
 
     function undrawDisplay() {
         displaySquares.forEach(square => {
-            square.classList.remove('block');
+            square.style.backgroundColor = '';
         })
     }
   
@@ -126,13 +126,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
 //KEYCODE ASSIGNMENTS
     function control(e) {
-        if(e.keyCode === 37) {
+        if (["ArrowLeft", "ArrowUp", "ArrowRight", "ArrowDown"].includes(e.key)) {
+            e.preventDefault();
+        }
+        if(e.key === "ArrowLeft") {
             moveLeft();
-        } else if (e.keyCode === 38) {
+        } else if (e.key === "ArrowUp") {
             rotate();
-        } else if (e.keyCode === 39) {
+        } else if (e.key === "ArrowRight") {
             moveRight();
-        } else if (e.keyCode === 40) {
+        } else if (e.key === "ArrowDown") {
             moveDown();
         }
     }
@@ -155,6 +158,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    function gameOver() {
+        if (current.some(index => squares[currentPosition + index].classList.contains('taken'))) {
+            scoreDisplay.innerHTML = 'GAMEOVER!';
+            clearInterval(timerId);
+            timerId = null;
+        }
+    }
+
 
 //MOVEMENT PLUS EDGE DETECTION
     function moveDown() {
@@ -165,6 +176,7 @@ document.addEventListener('DOMContentLoaded', () => {
             currentPosition += width;
             draw();
             freeze();
+            gameOver();
         }
     }
 
@@ -250,7 +262,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 //EVENT LISTENERS
-    document.addEventListener('keyup', control);
+    document.addEventListener('keydown', control);
     startBtn.addEventListener("click", startToggle);
 
     function addScore() {
@@ -261,7 +273,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 score += 1;
                 scoreDisplay.innerHTML = score;
                 row.forEach(index => {
-                    squares[index].classList.remove('taken', 'block')
+                    squares[index].classList.remove('taken')
+                    squares[index].style.backgroundColor = '';
                 });
                 const squaresRemoved = squares.splice(i, width);
                 squares = squaresRemoved.concat(squares);
