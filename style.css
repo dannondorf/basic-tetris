@@ -21,7 +21,7 @@
     height: 600px;
     display: flex;
     flex-wrap: wrap;
-    background-color: yellow;
+    background-color: whitesmoke;
     /* margin: 0 auto; */
 }
 
@@ -30,7 +30,7 @@
     height: 120px;
     display: flex;
     flex-wrap: wrap;
-    background-color: yellow;
+    background-color:  whitesmoke;
    margin-left: -140px;
    margin-right: 80px;
 }

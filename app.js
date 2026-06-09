@@ -1,5 +1,7 @@
 //To Do:  
-// - add colors and styles to blocks
+// - Lock delay — the grace period that finishes TODO #2, so you can actually use the gaps the collision fix opened.
+// - Reset on restart— wiping the board after game - over.
+// - The old wishlist: speed ramping with level, smarter scoring, hard - drop, ghost piece, a hold slot, sound, mobile buttons.
 // - fix collision issue that doesn't allow blocks to slide into open spaces underneath
 
 
@@ -35,6 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let displayIndex = 1;
     let timerId;
     let firstBlock = true;
+    let isGameOver = false;
     
 
 
@@ -146,7 +149,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function freeze() {
-        if(current.some(index => squares[currentPosition + index + width].classList.contains('taken'))) {
+        if (!isValidMove(currentPosition + width)) {
             current.forEach(index => squares[currentPosition + index].classList.add('taken'));
             randomBlock = nextRandom;
             nextRandom = Math.floor(Math.random() * theBlocks.length);
@@ -163,9 +166,33 @@ document.addEventListener('DOMContentLoaded', () => {
             scoreDisplay.innerHTML = 'GAMEOVER!';
             clearInterval(timerId);
             timerId = null;
+            isGameOver = true;
         }
     }
 
+    function reset() {
+        squares.forEach((square, index) => {
+            if (index < 450) {
+                square.classList.remove('taken')
+                square.style.backgroundColor = '';
+            }
+        });
+        score = 0;
+        scoreDisplay.innerHTML = score;
+        randomBlock = Math.floor(Math.random() * theBlocks.length);
+        currentRotation = 0;
+        current = theBlocks[randomBlock][currentRotation];
+        currentPosition = 6;
+        nextRandom = Math.floor(Math.random() * theBlocks.length);
+        nextBlock();
+    }
+
+    function isValidMove(position)  {
+        return current.every(offset => {
+            const cell = position + offset;
+            return cell < squares.length && !squares[cell].classList.contains('taken');
+        });
+    }
 
 //MOVEMENT PLUS EDGE DETECTION
     function moveDown() {
@@ -183,11 +210,8 @@ document.addEventListener('DOMContentLoaded', () => {
     function moveLeft() {
         undraw();
         const atLeftEdge = current.some(index => (currentPosition + index) % width === 0);
-        if (timerId === null || current.some(index => squares[currentPosition + index].classList.contains('taken'))) {
-            currentPosition += 1;
-        }
-        if(!atLeftEdge) {
-            currentPosition -= 1;
+        if (!atLeftEdge && isValidMove(currentPosition - 1)) {
+            currentPosition  -= 1;
         }
         draw();
     }
@@ -195,49 +219,30 @@ document.addEventListener('DOMContentLoaded', () => {
     function moveRight() {
         undraw();
         const atRightEdge = current.some(index => (currentPosition + index) % width === width - 1);
-        if (timerId === null || current.some(index => squares[currentPosition + index].classList.contains('taken'))) {
-            currentPosition -= 1;
-        }
-        if (!atRightEdge) {
+        if (!atRightEdge && isValidMove(currentPosition + 1)) {
             currentPosition += 1;
         }
         draw();
     }
 
-    //FIXED ROTATIONS AT THE EDGE
-    function isAtRight() {
-        return current.some(index => (currentPosition + index + 1) % width === 0);
-    }
-
-    function isAtLeft() {
-        return current.some(index => (currentPosition + index) % width === 0);
-    }
-
-    function checkEdgeRotation(p) {
-        p = p || currentPosition;
-        if ((p+1) % width < 4) {
-            if (isAtRight()) {
-                currentPosition += 1;
-                checkEdgeRotation(p);
-            }
-        }
-        else if (p % width > 5) {
-            if (isAtLeft()) {
-                currentPosition -= 1;
-                checkEdgeRotation(p);
-            }
-        }
-    }
 
     //BLOCK ROTATION
     function rotate() {
             undraw();
+            const previousRotation = currentRotation
             currentRotation++;
             if (currentRotation === current.length) {
                 currentRotation = 0;
             }
             current = theBlocks[randomBlock][currentRotation];
-            checkEdgeRotation();
+
+            const columns = current.map(offset => (currentPosition + offset) % width);
+            const wrapped = Math.max(...columns) - Math.min(...columns) > 3;
+
+            if (wrapped || !isValidMove(currentPosition)) {
+                currentRotation = previousRotation;
+                current =  theBlocks[randomBlock][currentRotation];
+            }
             draw();
     }
 
@@ -250,6 +255,10 @@ document.addEventListener('DOMContentLoaded', () => {
             clearInterval(timerId);
             timerId = null;
         } else {
+            if (isGameOver) {
+                reset();
+                isGameOver = false;
+            }
             draw();
             timerId = setInterval(moveDown, 500);
             if (firstBlock) {
